@@ -13,6 +13,8 @@ import RxCocoa
 class NewsVC: UIViewController {
 
     @IBOutlet private weak var tableView: UITableView!
+    @IBOutlet private weak var infoLabel: UILabel!
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
 
     let model = NewsVM()
     let bag = DisposeBag()
@@ -46,27 +48,54 @@ class NewsVC: UIViewController {
         if #available(iOS 15, *) {
             tableView.sectionHeaderTopPadding = 0
         }
+        self.activityIndicator.isHidden = true
+        self.activityIndicator.startAnimating()
+        self.infoLabel.isHidden = true
     }
 
     private func bindUI() {
-        Observable<Void>.merge([viewDidLoadSubject, viewDidAppearSubject])
+
         //Will fire on view did Load but will ignore subsequent view will appear call.
+        let fetchRequired = Observable.merge([viewDidLoadSubject, viewDidAppearSubject])
             .throttle(.seconds(1), latest: false, scheduler: MainScheduler.instance)
+            .share(replay: 1)
+
+        let fetchAction = fetchRequired.debug("will fetch")
             .flatMap {
-                self.model.fetchHeadlines()
-                    .handleUIError(stub: [])
+            self.model.fetchHeadlines()
+                .handleUIError(stub: [])
             }
-            .asDriver(onErrorJustReturn: [Article.mock()])
+            .share(replay: 1)
+
+        fetchRequired
+            .asDriver(onErrorJustReturn: ())
+            .map { false }
+            .drive(activityIndicator.rx.isHidden)
+            .disposed(by: bag)
+
+        fetchAction.asDriver(onErrorJustReturn: [Article.mock()])
             .drive(tableView.rx.items(cellIdentifier: NewsCellView.identifier, cellType: NewsCellView.self)) { _, model, cell in
-            cell.configure(model: model)
-        }
-        .disposed(by: bag)
+                cell.configure(model: model)
+            }
+            .disposed(by: bag)
+
+        fetchAction.asDriver(onErrorJustReturn: [])
+            .drive(onNext: { _ in
+            self.activityIndicator.isHidden = true
+            })
+            .disposed(by: bag)
+
+        fetchAction.asDriver(onErrorJustReturn: [])
+            .map{ $0.count > 0 }
+            .drive(infoLabel.rx.isHidden)
+            .disposed(by: bag)
 
         tableView.rx.modelSelected(Article.self).subscribe(onNext: { model in
             if let url = URL(string: model.url) {
                 MainFlowController.shared.newsFlow?.showHeadlineWebView(url: url)
             }
-        }).disposed(by: bag)
+        })
+        .disposed(by: bag)
     }
 
     private func fetchHeadline() {

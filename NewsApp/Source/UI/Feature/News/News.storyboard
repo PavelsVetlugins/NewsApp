@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19162" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="cqQ-gA-goc">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="cqQ-gA-goc">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19144"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -20,6 +20,16 @@
                                 <rect key="frame" x="18" y="88" width="378" height="725"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                             </tableView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No news found, try again later" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="NIX-LB-cki" userLabel="InfoLabel">
+                                <rect key="frame" x="18" y="437" width="378" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="6og-GU-c25">
+                                <rect key="frame" x="188.5" y="429.5" width="37" height="37"/>
+                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -28,11 +38,15 @@
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="bbm-wa-9Os" secondAttribute="trailing" constant="18" id="FcA-zY-IhK"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="bbm-wa-9Os" secondAttribute="bottom" id="O3l-W7-jzU"/>
                             <constraint firstItem="bbm-wa-9Os" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="18" id="S0l-xt-UPa"/>
+                            <constraint firstItem="6og-GU-c25" firstAttribute="centerY" secondItem="5EZ-qb-Rvc" secondAttribute="centerY" id="d1H-uw-nCj"/>
+                            <constraint firstItem="6og-GU-c25" firstAttribute="centerX" secondItem="5EZ-qb-Rvc" secondAttribute="centerX" id="ppm-g2-0HB"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Logo" id="NEH-z7-dWc"/>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
+                        <outlet property="activityIndicator" destination="6og-GU-c25" id="NPP-qQ-qyL"/>
+                        <outlet property="infoLabel" destination="NIX-LB-cki" id="zZP-jo-fXw"/>
                         <outlet property="tableView" destination="bbm-wa-9Os" id="hz6-PA-9aH"/>
                     </connections>
                 </viewController>
