@@ -17,6 +17,10 @@ class NewsVC: UIViewController {
     let model = NewsVM()
     let bag = DisposeBag()
 
+    let viewDidLoadSubject = PublishSubject<Void>()
+    let viewDidAppearSubject = PublishSubject<Void>()
+
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -26,7 +30,13 @@ class NewsVC: UIViewController {
 
         configureUI()
         bindUI()
-        model.fetchHeadlines()
+
+        viewDidLoadSubject.onNext(())
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewDidAppearSubject.onNext(())
     }
 
     private func configureUI() {
@@ -39,15 +49,28 @@ class NewsVC: UIViewController {
     }
 
     private func bindUI() {
-        model.headlines.asDriver().drive(tableView.rx.items(cellIdentifier: NewsCellView.identifier, cellType: NewsCellView.self)) { _, model, cell in
+        Observable<Void>.merge([viewDidLoadSubject, viewDidAppearSubject])
+        //Will fire on view did Load but will ignore subsequent view will appear call.
+            .throttle(.seconds(1), latest: false, scheduler: MainScheduler.instance)
+            .flatMap {
+                self.model.fetchHeadlines()
+                    .handleUIError(stub: [])
+            }
+            .asDriver(onErrorJustReturn: [Article.mock()])
+            .drive(tableView.rx.items(cellIdentifier: NewsCellView.identifier, cellType: NewsCellView.self)) { _, model, cell in
             cell.configure(model: model)
-        }.disposed(by: bag)
+        }
+        .disposed(by: bag)
 
         tableView.rx.modelSelected(Article.self).subscribe(onNext: { model in
             if let url = URL(string: model.url) {
                 MainFlowController.shared.newsFlow?.showHeadlineWebView(url: url)
             }
         }).disposed(by: bag)
+    }
+
+    private func fetchHeadline() {
+
     }
 }
 
@@ -70,4 +93,15 @@ extension NewsVC: UITableViewDelegate {
         return 64
     }
 
+}
+
+private extension ObservableType {
+
+    func handleUIError(stub: Element) -> Observable<Element> {
+        return self.catch { err in
+            //TODO: Handle error
+            print("+++ error \(err)")
+            return .just(stub)
+        }
+    }
 }

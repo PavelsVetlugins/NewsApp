@@ -12,11 +12,12 @@ import RxCocoa
 
 class NewsVM {
 
-    let bag = DisposeBag()
+//    let bag = DisposeBag()
 
-    let headlines: BehaviorRelay<[Article]> = BehaviorRelay(value: [])
+//    let headlines: BehaviorRelay<[Article]> = BehaviorRelay(value: [])
 
-    func fetchHeadlines() {
-        HTTPService().fetchHeadlines().map{$0.articles}.bind(to: headlines).disposed(by: bag)
+    func fetchHeadlines() -> Observable<[Article]> {
+        return HTTPService().fetchHeadlines().map{$0.articles}
+//            .bind(to: headlines).disposed(by: bag)
     }
 }
