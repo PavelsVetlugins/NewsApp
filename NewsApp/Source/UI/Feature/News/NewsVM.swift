@@ -12,12 +12,21 @@ import RxCocoa
 
 class NewsVM {
 
-//    let bag = DisposeBag()
+    let bag = DisposeBag()
 
-//    let headlines: BehaviorRelay<[Article]> = BehaviorRelay(value: [])
+    let cachedHeadlines: BehaviorRelay<[Article]> = BehaviorRelay(value: [])
 
     func fetchHeadlines() -> Observable<[Article]> {
-        return HTTPService().fetchHeadlines().map{$0.articles}
-//            .bind(to: headlines).disposed(by: bag)
+        return HTTPService().fetchHeadlines()
+            .map{$0.articles}
+            .do(onNext: { self.cachedHeadlines.accept($0)})
+                .catch({ err in
+                    if self.cachedHeadlines.value.count > 0 {
+                        print("+++ request failed, but return cached value")
+                        return .just(self.cachedHeadlines.value)
+                    } else {
+                        throw err
+                    }
+                })
     }
 }
