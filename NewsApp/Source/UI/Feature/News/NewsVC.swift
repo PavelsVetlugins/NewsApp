@@ -60,24 +60,28 @@ class NewsVC: UIViewController {
             .throttle(.seconds(1), latest: false, scheduler: MainScheduler.instance)
             .share(replay: 1)
 
-        let fetchAction = fetchRequired.debug("will fetch")
+        let fetchAction = fetchRequired
             .flatMap {
             self.model.fetchHeadlines()
                 .handleUIError(stub: [])
             }
             .share(replay: 1)
 
+        //Single source of truth for data source
+        model.cachedHeadlines.asDriver()
+            .drive(tableView.rx.items(cellIdentifier: NewsCellView.identifier, cellType: NewsCellView.self)) { _, model, cell in
+                cell.configure(model: model)
+            }
+            .disposed(by: bag)
+
+        //UI reaction on fetch actions
         fetchRequired
+            .filter { [weak self] _ in self?.model.cachedHeadlines.value.count ?? 0 == 0 }
             .asDriver(onErrorJustReturn: ())
             .map { false }
             .drive(activityIndicator.rx.isHidden)
             .disposed(by: bag)
 
-        fetchAction.asDriver(onErrorJustReturn: [Article.mock()])
-            .drive(tableView.rx.items(cellIdentifier: NewsCellView.identifier, cellType: NewsCellView.self)) { _, model, cell in
-                cell.configure(model: model)
-            }
-            .disposed(by: bag)
 
         fetchAction.asDriver(onErrorJustReturn: [])
             .drive(onNext: { _ in
@@ -124,9 +128,9 @@ extension NewsVC: UITableViewDelegate {
 
 }
 
-private extension ObservableType {
+private extension PrimitiveSequence where Trait == SingleTrait {
 
-    func handleUIError(stub: Element) -> Observable<Element> {
+    func handleUIError(stub: Element) -> PrimitiveSequence<Trait, Element> {
         return self.catch { err in
             //TODO: Handle error
             print("+++ error \(err)")

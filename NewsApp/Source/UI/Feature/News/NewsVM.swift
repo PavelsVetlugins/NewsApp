@@ -16,10 +16,10 @@ class NewsVM {
 
     let cachedHeadlines: BehaviorRelay<[Article]> = BehaviorRelay(value: [])
 
-    func fetchHeadlines() -> Observable<[Article]> {
+    func fetchHeadlines() -> Single<[Article]> {
         return HTTPService().fetchHeadlines()
-            .map{$0.articles}
-            .do(onNext: { self.cachedHeadlines.accept($0)})
+            .map{ $0.articles }
+            .do(onSuccess: { self.cachedHeadlines.accept($0) })
                 .catch({ err in
                     if self.cachedHeadlines.value.count > 0 {
                         print("+++ request failed, but return cached value")
@@ -28,5 +28,5 @@ class NewsVM {
                         throw err
                     }
                 })
-    }
+                }
 }
