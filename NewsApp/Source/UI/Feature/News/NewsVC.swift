@@ -74,15 +74,12 @@ class NewsVC: UIViewController {
             .disposed(by: bag)
 
         //UI reaction on fetch actions
-        fetchRequired
-            .filter { [weak self] _ in self?.model.cachedHeadlines.value.count ?? 0 == 0 }
-            .asDriver(onErrorJustReturn: ())
-            .map { false }
-            .drive(activityIndicator.rx.isHidden)
-            .disposed(by: bag)
+        let fetchIndicatorRequired = fetchRequired.filter { [weak self] _ in self?.model.cachedHeadlines.value.count ?? 0 == 0 }
 
-        fetchAction.map { _ in true }
-            .asDriver(onErrorJustReturn: true)
+        let running = Observable.merge(fetchIndicatorRequired.map { false }, fetchAction.map { _ in true })
+            .asDriver(onErrorJustReturn: false)
+
+        running
             .drive(activityIndicator.rx.isHidden)
             .disposed(by: bag)
 
