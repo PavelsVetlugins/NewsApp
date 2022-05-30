@@ -58,14 +58,13 @@ class NewsVC: UIViewController {
         //Will fire on view did Load but will ignore subsequent view will appear call.
         let fetchRequired = Observable.merge([viewDidLoadSubject, viewDidAppearSubject])
             .throttle(.seconds(1), latest: false, scheduler: MainScheduler.instance)
-            .share(replay: 1)
 
         let fetchAction = fetchRequired
             .flatMap {
             self.model.fetchHeadlines()
                 .handleUIError(stub: [])
             }
-            .share(replay: 1)
+            .share()
 
         //Single source of truth for data source
         model.cachedHeadlines.asDriver()
@@ -82,11 +81,9 @@ class NewsVC: UIViewController {
             .drive(activityIndicator.rx.isHidden)
             .disposed(by: bag)
 
-
-        fetchAction.asDriver(onErrorJustReturn: [])
-            .drive(onNext: { _ in
-            self.activityIndicator.isHidden = true
-            })
+        fetchAction.map { _ in true }
+            .asDriver(onErrorJustReturn: true)
+            .drive(activityIndicator.rx.isHidden)
             .disposed(by: bag)
 
         fetchAction.asDriver(onErrorJustReturn: [])
